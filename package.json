@@ -1,0 +1,37 @@
+{
+    "private": true,
+    "scripts": {
+        "lint": "eslint --ext .js,.vue --ignore-path .gitignore --fix resources/js",
+        "format": "prettier resources/js --check",
+        "dev": "vite",
+        "build": "vite build"
+    },
+    "devDependencies": {
+        "@vitejs/plugin-vue": "^2.3.3",
+        "autoprefixer": "^10.4.7",
+        "axios": "^0.25",
+        "eslint": "^8.11.0",
+        "eslint-config-prettier": "^8.5.0",
+        "eslint-plugin-vue": "^8.5.0",
+        "laravel-vite-plugin": "^0.2.4",
+        "lodash": "^4.17.19",
+        "postcss": "^8.4.14",
+        "prettier": "2.5.1",
+        "tailwindcss": "^3.1.4",
+        "vite": "^2.9.13",
+        "vue-loader": "^16.2.0"
+    },
+    "dependencies": {
+        "@headlessui/vue": "^1.5.0",
+        "@heroicons/vue": "^1.0.5",
+        "@highlightjs/vue-plugin": "^2.1.0",
+        "@inertiajs/inertia": "^0.11.0",
+        "@inertiajs/inertia-vue3": "^0.6.0",
+        "@inertiajs/progress": "^0.2.7",
+        "@tailwindcss/forms": "^0.4.0",
+        "@tailwindcss/line-clamp": "^0.3.1",
+        "highlight.js": "^11.4.0",
+        "underscore": "^1.13.2",
+        "vue": "^3.2.29"
+    }
+}

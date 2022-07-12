@@ -1,0 +1,123 @@
+version: "3.9"
+services:
+  database:
+    # container_name: "${DATABASE_CONTAINER_NAME}"
+    image: "${DATABASE_VERSION}"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DATABASE_ROOT}
+      MYSQL_DATABASE: ${DATABASE_NAME}
+      MYSQL_USER: ${DATABASE_USER}
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - database-data:/var/lib/mysql
+    networks:
+      - default
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.10"
+          memory: 256M
+        reservations:
+          cpus: "0.01"
+          memory: 128M
+  wordpress:
+    #    container_name: "${WORDPRESS_NAME}"
+    #    depends_on:
+    #      - database
+    image: "wordpress:${WORDPRESS_VERSION}"
+    environment:
+      WORDPRESS_DB_HOST: "database:3306"
+      WORDPRESS_DB_USER: ${DATABASE_USER}
+      WORDPRESS_DB_PASSWORD: ${DATABASE_PASSWORD}
+      WORDPRESS_DB_NAME: ${DATABASE_NAME}
+      WORDPRESS_DEBUG: ${WORDPRESS_DEBUG}
+    volumes:
+      - ./config/wordpress/www.conf:/usr/local/etc/php-fpm.d/www.conf
+      - ./config/wordpress/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+      - wordpress-data:/var/www/html
+    networks:
+      - default
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.10"
+          memory: 64M
+        reservations:
+          cpus: "0.01"
+          memory: 32M
+  wordpress-cli:
+    #    container_name: "${WORDPRESS_CLI_NAME}"
+    #    depends_on:
+    #      database:
+    #        condition: service_healthy
+    #      wordpress:
+    #        condition: service_started
+    image: "wordpress:${WORDPRESS_CLI_VERSION}"
+    environment:
+      WORDPRESS_DB_HOST: "database:3306"
+      WORDPRESS_DB_USER: ${DATABASE_USER}
+      WORDPRESS_DB_PASSWORD: ${DATABASE_PASSWORD}
+      WORDPRESS_DB_NAME: ${DATABASE_NAME}
+      WORDPRESS_DEBUG: ${WORDPRESS_DEBUG}
+      HOME: /tmp
+    command: [sh, -c, "while ! mysqladmin ping -h database -u \"${DATABASE_USER}\" -p${DATABASE_PASSWORD} --silent; do sleep 1; done && tail -f /dev/null"]
+    volumes:
+      - wordpress-data:/var/www/html
+    networks:
+      - default
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.10"
+          memory: 32M
+        reservations:
+          cpus: "0.01"
+          memory: 32M
+  proxy:
+    #    container_name: "${PROXY_NAME}"
+    #    depends_on:
+    #      - wordpress
+    image: "nginx:${NGINX_VERSION}"
+    volumes:
+      - ./config/proxy/conf.d:/etc/nginx/conf.d
+      - ./config/proxy/logs:/var/log/nginx
+      - wordpress-data:/var/www/html
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${NAME}.entrypoints=http"
+      - "traefik.http.routers.${NAME}.rule=Host(`${HOST}`, `www.${HOST}`)"
+      - "traefik.http.middlewares.${NAME}-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.${NAME}.middlewares=${NAME}-https-redirect"
+      - "traefik.http.routers.${NAME}-secure.entrypoints=https"
+      - "traefik.http.routers.${NAME}-secure.rule=Host(`${HOST}`, `www.${HOST}`)"
+      - "traefik.http.routers.${NAME}-secure.tls=true"
+      - "traefik.http.routers.${NAME}-secure.tls.certresolver=http"
+      - "traefik.http.routers.${NAME}-secure.service=${NAME}"
+      - "traefik.http.services.${NAME}.loadbalancer.server.port=80"
+      - "traefik.docker.network=proxy"
+    networks:
+      - proxy
+      - default
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.10"
+          memory: 32M
+        reservations:
+          cpus: "0.01"
+          memory: 32M
+volumes:
+  wordpress-data:
+  database-data:
+networks:
+  proxy:
+    external: true
+  default:

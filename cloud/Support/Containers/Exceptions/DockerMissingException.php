@@ -1,0 +1,21 @@
+<?php
+
+namespace Support\Containers\Exceptions;
+
+use Exception;
+use Support\Shell;
+
+class DockerMissingException extends Exception
+{
+    public function render($request = null): void
+    {
+        $console = app('console');
+        $shell = app(Shell::class);
+
+        $console->line('');
+        $console->line($shell->formatErrorMessage('Docker is not installed.'));
+        $console->line('');
+        $console->line($shell->formatErrorMessage('Please visit https://docs.docker.com/get-docker/'));
+        $console->line($shell->formatErrorMessage('for information on how to install Docker for your machine.'));
+    }
+}
